@@ -35,7 +35,7 @@ async def process_customer_id_for_orders(message: Message, state: FSMContext):
 
 async def show_orders_page(message: Message, customer_id: int, page: int, state: FSMContext):
     async with aiohttp.ClientSession() as session:
-        params = {"page": page, "limit": 10}
+        params = {"page": page, "limit": 20}
         
         try:
             async with session.get(f"{config.api_url}/customers/{customer_id}/orders", params=params) as resp:

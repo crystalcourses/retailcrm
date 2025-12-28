@@ -18,7 +18,7 @@ async def customers_list(callback: CallbackQuery, state: FSMContext):
 
 async def show_customers_page(message: Message, page: int, state: FSMContext, filters: dict = None):
     async with aiohttp.ClientSession() as session:
-        params = {"page": page, "limit": 10}
+        params = {"page": page, "limit": 20}
         
         if filters:
             if filters.get("first_name"):
@@ -28,8 +28,21 @@ async def show_customers_page(message: Message, page: int, state: FSMContext, fi
             if filters.get("email"):
                 params["email"] = filters["email"]
         
+        url = f"{config.api_url}/customers"
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "RetailCRM-Bot/1.0"
+        }
+        
+        print(f"DEBUG BOT: Requesting URL: {url}")
+        print(f"DEBUG BOT: Params: {params}")
+        
         try:
-            async with session.get(f"{config.api_url}/customers", params=params) as resp:
+            async with session.get(url, params=params, headers=headers) as resp:
+                print(f"DEBUG BOT: Response status: {resp.status}")
+                response_text = await resp.text()
+                print(f"DEBUG BOT: Response text: {response_text[:500]}")
+                
                 if resp.status == 200:
                     customers = await resp.json()
                     
@@ -55,8 +68,11 @@ async def show_customers_page(message: Message, page: int, state: FSMContext, fi
                         reply_markup=get_pagination_keyboard(page, total_pages, "customers_list")
                     )
                 else:
-                    await message.edit_text(f"Ошибка при получении данных: {resp.status}")
+                    await message.edit_text(f"Ошибка при получении данных: {resp.status}\n{response_text[:200]}")
         except Exception as e:
+            import traceback
+            print(f"DEBUG BOT: Exception: {str(e)}")
+            print(f"DEBUG BOT: Traceback: {traceback.format_exc()}")
             await message.edit_text(f"Ошибка: {str(e)}")
 
 

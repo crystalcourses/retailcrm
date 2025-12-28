@@ -16,9 +16,12 @@ async def get_customers(
     created_at_from: Optional[datetime] = Query(None, description="Filter by creation date from"),
     created_at_to: Optional[datetime] = Query(None, description="Filter by creation date to"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page")
+    limit: int = Query(20, ge=20, le=100, description="Items per page (20, 50, or 100)")
 ):
     try:
+        if limit not in [20, 50, 100]:
+            limit = 20
+        
         created_from_str = created_at_from.strftime("%Y-%m-%d %H:%M:%S") if created_at_from else None
         created_to_str = created_at_to.strftime("%Y-%m-%d %H:%M:%S") if created_at_to else None
         
@@ -33,7 +36,7 @@ async def get_customers(
         )
         
         if not result.get("success"):
-            raise HTTPException(status_code=400, detail="Failed to fetch customers")
+            raise HTTPException(status_code=400, detail=result.get("errorMsg", "Failed to fetch customers"))
         
         customers = result.get("customers", [])
         return [

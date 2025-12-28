@@ -27,32 +27,52 @@ class RetailCRMService:
             params = {}
         params["apiKey"] = self.api_key
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             if method.upper() == "GET":
-                response = await client.get(url, params=params)
+                print(f"DEBUG GET: URL: {url}")
+                print(f"DEBUG GET: Params: {params}")
+                response = await client.get(url, params=params, headers=headers)
+                print(f"DEBUG GET: Response status: {response.status_code}")
+                print(f"DEBUG GET: Response text: {response.text[:500]}")
             elif method.upper() == "POST":
                 if json_param and data:
                     form_data = {json_param: json.dumps(data, ensure_ascii=False)}
                 else:
                     form_data = data or {}
                 
-                print(f"DEBUG: URL: {url}")
-                print(f"DEBUG: Form data: {form_data}")
+                print(f"DEBUG POST: URL: {url}")
+                print(f"DEBUG POST: Form data: {form_data}")
                 
                 response = await client.post(
                     url, 
                     params=params,
                     data=form_data,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"}
+                    headers={**headers, "Content-Type": "application/x-www-form-urlencoded"}
                 )
                 
-                print(f"DEBUG: Response status: {response.status_code}")
-                print(f"DEBUG: Response text: {response.text}")
+                print(f"DEBUG POST: Response status: {response.status_code}")
+                print(f"DEBUG POST: Response text: {response.text[:500]}")
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            response.raise_for_status()
-            return response.json()
+            if response.status_code >= 400:
+                return {
+                    "success": False,
+                    "errorMsg": f"HTTP {response.status_code}: {response.text}"
+                }
+            
+            try:
+                return response.json()
+            except:
+                return {
+                    "success": False,
+                    "errorMsg": f"Invalid JSON response: {response.text}"
+                }
     
     async def get_customers(
         self, 

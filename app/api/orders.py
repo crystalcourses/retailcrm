@@ -11,9 +11,12 @@ router = APIRouter()
 async def get_customer_orders(
     customer_id: int = Path(..., description="Customer ID"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page")
+    limit: int = Query(20, ge=20, le=100, description="Items per page (20, 50, or 100)")
 ):
     try:
+        if limit not in [20, 50, 100]:
+            limit = 20
+        
         result = await retailcrm_service.get_orders(
             customer_id=customer_id,
             page=page,
