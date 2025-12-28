@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: retailcrm-bot
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./bot:/app/bot
